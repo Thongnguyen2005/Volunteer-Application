@@ -1,0 +1,70 @@
+function main(){
+  const form = FormApp.openById('1bYB8aH9O4zKag7avo3Nhwvfhm8I2r6ThgrRKkUnXgrM');
+  const formResponses = form.getResponses();
+  var dates = [4, 5, 6, 7, 8];
+  const timeSlots = ['8:00 AM to 1:00 PM', '12:00 PM to 5:00 PM', '3:00 PM to 8:00 PM', '5:00 PM to 8:00 PM', 'Not today'];
+  
+  var timeSlotsLeft = []; //2D array to store the available time slots for each day
+  //Format:
+  // [ [Day 1], [Day 2], ... ]
+  // [ ['8:00 AM to 1:00 PM', '12:00 PM to 5:00 PM', '3:00 PM to 8:00 PM', '5:00 PM to 8:00 PM'], [], ...]
+
+  for (var i = 0; i < dates.length; i++) {
+    timeSlotsLeft.push([...timeSlots]); // Create a copy of timeSlots
+  }
+  console.log(timeSlotsLeft);
+
+  //create the initial availability with the maximum of 5 volunteers can register for each time slot.
+  var availability = []; // A 2D array to store availability for each of 5 dates
+  // Format: 
+  //  [ [Day 1], [Day 2], ... ]
+  //  = [ [5, 5, 5, 5], [... ] ]
+
+  for(var i=0; i<dates.length; i++){
+    availability.push(new Array(4).fill(5));
+  }
+  console.log(availability);
+ 
+  for (const formResponse of formResponses) {
+    for(var i=0; i<dates.length; i++){
+      var itemIndex = dates[i];
+      var item  = form.getItems()[itemIndex];
+      var itemResponse = formResponse.getResponseForItem(item);
+      var stringResponse = itemResponse.getResponse();
+      if (stringResponse != 'Not today'){
+        var choices = item.asMultipleChoiceItem().getChoices(); // an array of choices in the item
+        //asMultipleChoiceItem() coverts data type itemResponse to multiple choice
+        var selectedChoiceIndex = -1;  
+        for (var j = 0; j < choices.length - 1; j++) {
+          if (choices[j].getValue() == stringResponse) { //compare string with string
+            selectedChoiceIndex = j; //determine the choice index in the item
+            break;
+          }
+        }
+        updateAvailability(availability, i, selectedChoiceIndex, timeSlotsLeft, item, stringResponse);
+      } 
+    }
+  }
+    console.log(availability);
+    console.log(timeSlotsLeft);
+     
+}
+
+//update the availability 
+function updateAvailability(availability, date, choiceIndex, timeSlotsLeft, item, stringResponse) {
+  if (availability[date][choiceIndex] > 1){ //check with availability to update it
+    availability[date][choiceIndex]--;
+  }
+  else if (availability[date][choiceIndex] = 1){ //case when the time option for the date is unavailable
+    availability[date][choiceIndex]--;
+    //delete an element in availability
+    availability[date] = availability[date].filter(function (element2) {
+        return element2 !== availability[date][choiceIndex];
+      });
+    //delete an element in timeSlotsLeft
+    timeSlotsLeft[date] = timeSlotsLeft[date].filter(function (element) {
+        return element !== stringResponse;
+      });
+    item.asMultipleChoiceItem().setChoiceValues(timeSlotsLeft[date]); //reset choices for an item
+  }
+}
