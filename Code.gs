@@ -57,6 +57,11 @@ function main(){
   }
     console.log(availability);
     console.log(timeSlotsLeft);
+
+    //Emailing reminder
+    //This remind volunteers of what specific time that they have registered for each day
+
+    sendReminderEmails();
      
 }
 
@@ -76,5 +81,37 @@ function updateAvailability(availability, date, choiceIndex, timeSlotsLeft, item
         return element !== stringResponse;
       });
     item.asMultipleChoiceItem().setChoiceValues(timeSlotsLeft[date]); //reset choices for an item
+  }
+}
+
+
+function sendReminderEmails() {
+  const form = FormApp.openById('1bYB8aH9O4zKag7avo3Nhwvfhm8I2r6ThgrRKkUnXgrM');
+  const formResponses = form.getResponses();
+
+  for (const formResponse of formResponses) {
+    const responseData = formResponse.getItemResponses();
+    //Gets all item responses contained in a form response, in the same order that the items appear in the form.
+
+    // Extract relevant information from the form response
+    const email = formResponse.getRespondentEmail(); // Assuming you collect email addresses in your form
+    let registrationDetails = '';
+
+    for (const response of responseData) {
+      const question = response.getItem().getTitle(); //string
+      const answer = response.getResponse(); //string
+
+      // Check if this is a date and time question
+      if (question.startsWith('What time on December')) {
+        registrationDetails += `${question}: ${answer}\n`; //embeded two strings using $
+      }
+    }
+
+    // Send an email reminder to the volunteer
+    const subject = 'Volunteer Time Slot Reminder';
+    const message = `Hello,\n\nThank you for volunteering at WoMen of Connection Ministry!\n\nYou have registered for the following time slot:\n\n${registrationDetails}\nPlease arrive on time.\n\nBest regards,\nWoMen of Connection Ministry`;
+
+    // Send the email using MailApp or GmailApp
+    MailApp.sendEmail(email, subject, message);
   }
 }
