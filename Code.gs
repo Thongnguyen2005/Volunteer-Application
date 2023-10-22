@@ -62,6 +62,15 @@ function main() {
 
   console.log(availability);
   console.log(timeSlotsLeft);
+
+}
+
+function sendReminderPreEvent(){ //send a second reminder one day before the the events begins to all volunteers
+  const form = FormApp.openById('1bYB8aH9O4zKag7avo3Nhwvfhm8I2r6ThgrRKkUnXgrM');
+  const formResponses = form.getResponses();
+  for (const formResponse of formResponses) { //send the second reminder about volunteer's picked time slots to all volunteers
+    sendReminderEmails(formResponse);
+  }  
 }
 
 // Update the availability
